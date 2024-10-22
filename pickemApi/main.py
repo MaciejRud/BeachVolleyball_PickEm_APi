@@ -4,10 +4,12 @@ Main file of project.
 
 # main.py
 from fastapi import FastAPI
+from pickemApi.database import lifespan
 
-app = FastAPI()
+from pickemApi.routers.user import router as user_router
 
 
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+app = FastAPI(lifespan=lifespan)
+
+
+app.include_router(user_router, prefix="")
