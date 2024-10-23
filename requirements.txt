@@ -7,3 +7,8 @@ python-dotenv
 pydantic_settings
 fastapi_users[sqlalchemy] >=13.0.0, <14.0.0
 authlib>=1.3.2, <1.4.0
+rich
+asgi-correlation-id
+python-json-logger
+python-multipart
+httpx>=0.27.2, <0.30.0

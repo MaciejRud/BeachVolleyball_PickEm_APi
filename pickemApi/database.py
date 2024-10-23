@@ -10,7 +10,7 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 from pickemApi.models.model import User, Base
 
 from contextlib import asynccontextmanager
-from config import config
+from pickemApi.config import config
 
 
 engine = create_async_engine(
@@ -44,9 +44,12 @@ async def get_db():
                 await db.rollback()  # Asynchronicznie wycofaj zmiany podczas testów
             else:
                 await db.commit()  # Domyślna transakcja
-        except Exception:
+        except Exception as e:
             await db.rollback()  # Zawsze wycofaj w przypadku wyjątku
+            print(f"Error during database operation: {e}")
             raise
+        finally:
+            await db.close()
 
 
 async def get_user_db(session: AsyncSession = Depends(get_db)):

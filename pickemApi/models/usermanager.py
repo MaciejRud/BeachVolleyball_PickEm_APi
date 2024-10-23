@@ -22,6 +22,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
+    test_reset_password_token = None
 
     async def on_after_register(
         self, user: User, request: Request | None = None
@@ -33,6 +34,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"User {user.id} has forgot their password. Reset token: {token}")
+        self.test_reset_password_token = token
 
     async def on_after_request_verify(
         self, user: User, token: str, request: Optional[Request] = None

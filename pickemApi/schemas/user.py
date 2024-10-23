@@ -3,7 +3,7 @@ Schemas for user models.
 """
 
 import uuid
-
+from pydantic import ConfigDict
 from fastapi_users import schemas
 
 
@@ -18,5 +18,4 @@ class UserResponse(schemas.BaseUser[uuid.UUID]):
 
     username: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
