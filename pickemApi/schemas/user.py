@@ -13,6 +13,10 @@ class UserIn(schemas.BaseUserCreate):
     username: str
 
 
+class UserSuperIn(UserIn):
+    is_superuser: bool
+
+
 class UserResponse(schemas.BaseUser[uuid.UUID]):
     """Schema for user response."""
 

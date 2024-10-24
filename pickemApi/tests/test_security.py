@@ -7,7 +7,6 @@ import pytest
 from httpx import AsyncClient
 from pickemApi.models.model import User
 from pickemApi.models.usermanager import UserManager
-from pickemApi.config import config
 
 
 @pytest.mark.anyio

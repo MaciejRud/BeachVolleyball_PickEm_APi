@@ -4,17 +4,28 @@ Configuration for testing API.
 
 import os
 import pytest
+import contextlib
 
 from typing import AsyncGenerator
 from httpx import AsyncClient, ASGITransport
+
+from fastapi_users.password import PasswordHelper
+from pwdlib import PasswordHash, exceptions
+from pwdlib.hashers.argon2 import Argon2Hasher
 
 
 os.environ["ENV_STATE"] = "testing"  # noqa E402
 from pickemApi.main import app
 from pickemApi.database import engine, get_db
-from pickemApi.config import config
 from pickemApi.models.model import Base, User
 from pickemApi.models.usermanager import get_user_manager
+
+
+password_hash = PasswordHash((Argon2Hasher(),))
+password_helper = PasswordHelper(password_hash)
+
+get_async_session_context = contextlib.asynccontextmanager(get_db)
+get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
 
 
 @pytest.fixture(scope="session")
@@ -43,14 +54,14 @@ async def async_client(db_setup) -> AsyncGenerator:
 @pytest.fixture
 async def db_session(db_setup) -> AsyncGenerator:
     """Temporary in-memory database session for testing."""
-    async for session in get_db():
+    async with get_async_session_context() as session:
         yield session
 
 
 @pytest.fixture
 async def user_manager(db_session) -> AsyncGenerator:
     """Fixture for UserManager to be used in tests."""
-    async for user_manager in get_user_manager():
+    async with get_user_manager_context() as user_manager:
         yield user_manager
 
 
@@ -77,6 +88,45 @@ async def authorized_client(
 ) -> AsyncClient:
     """Return logged in user."""
     user_data = {"username": registered_user.email, "password": "strongpassword"}
+
+    res = await async_client.post("/auth/jwt/login", data=user_data)
+
+    res.raise_for_status()
+
+    token = res.json()["access_token"]
+
+    client = async_client
+    client.headers["Authorization"] = f"Bearer {token}"
+    return client
+
+
+@pytest.fixture
+async def superuser(db_session) -> User:
+    """Create a superuser for testing."""
+    plain_password = "Test123"
+    hashed_password = password_helper.hash(plain_password)
+
+    superuser_data = {
+        "email": "superuser@example.com",
+        "hashed_password": hashed_password,
+        "username": "Super_User",
+        "is_superuser": True,
+    }
+
+    # Stwórz nowego użytkownika
+    superuser = User(**superuser_data)
+    db_session.add(superuser)
+    await db_session.commit()
+
+    return superuser
+
+
+@pytest.fixture
+async def authorized_superclient(
+    async_client: AsyncClient, superuser: User
+) -> AsyncClient:
+    """Return logged in superuser."""
+    user_data = {"username": superuser.email, "password": "Test123"}
 
     res = await async_client.post("/auth/jwt/login", data=user_data)
 
