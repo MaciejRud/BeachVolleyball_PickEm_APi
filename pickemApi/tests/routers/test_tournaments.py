@@ -117,7 +117,7 @@ async def test_create_event(authorized_superclient, created_tournament):
     }
 
     response = await authorized_superclient.post(
-        f"/tournaments/{created_tournament.id}/event", json=event_data
+        f"/tournaments/{created_tournament.id}/events", json=event_data
     )
 
     assert response.status_code == 201
@@ -139,7 +139,7 @@ async def test_create_event_invalid_question_type(
     }
 
     response = await authorized_superclient.post(
-        f"/tournaments/{created_tournament.id}/event", json=event_data
+        f"/tournaments/{created_tournament.id}/events", json=event_data
     )
 
     assert response.status_code == 422  # HTTP 422 Unprocessable Entity
@@ -154,7 +154,7 @@ async def test_create_event_missing_fields(authorized_superclient, created_tourn
     }
 
     response = await authorized_superclient.post(
-        f"/tournaments/{created_tournament.id}/event", json=event_data
+        f"/tournaments/{created_tournament.id}/events", json=event_data
     )
 
     assert response.status_code == 422  # HTTP 422 Unprocessable Entity
@@ -172,7 +172,7 @@ async def test_create_event_invalid_points_value(
     }
 
     response = await authorized_superclient.post(
-        f"/tournaments/{created_tournament.id}/event", json=event_data
+        f"/tournaments/{created_tournament.id}/events", json=event_data
     )
 
     assert response.status_code == 422  # HTTP 422 Unprocessable Entity

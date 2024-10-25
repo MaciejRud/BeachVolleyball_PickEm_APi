@@ -5,7 +5,7 @@ Schemas for all functionality in API.
 import uuid
 from enum import Enum
 from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import date
 
 
@@ -48,7 +48,8 @@ class TournamentResponse(TournamentBase):
 
 class UserAnswerBase(BaseModel):
     user_id: uuid.UUID
-    answer: str
+    event_id: uuid.UUID
+    answer: Union[str, List[str]]
 
 
 class UserAnswerCreate(UserAnswerBase):

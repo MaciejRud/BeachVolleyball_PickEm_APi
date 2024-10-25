@@ -9,18 +9,17 @@ import uuid
 
 from typing import AsyncGenerator
 from httpx import AsyncClient, ASGITransport
+from datetime import date
 
 from fastapi_users.password import PasswordHelper
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 
-from sqlalchemy.future import select
-
 
 os.environ["ENV_STATE"] = "testing"  # noqa E402
 from pickemApi.main import app
 from pickemApi.database import engine, get_db
-from pickemApi.models.model import Base, User, Tournament
+from pickemApi.models.model import Base, User, Tournament, Event, QuestionType
 from pickemApi.models.usermanager import get_user_manager
 
 
@@ -100,6 +99,7 @@ async def authorized_client(
 
     client = async_client
     client.headers["Authorization"] = f"Bearer {token}"
+    client.user_id = registered_user.id
     return client
 
 
@@ -143,22 +143,59 @@ async def authorized_superclient(
 
 
 @pytest.fixture
-async def created_tournament(
-    authorized_superclient: AsyncClient, db_session
-) -> Tournament:
-    res = await authorized_superclient.post(
-        "/tournaments/", json={"name": "Testowy turniej", "date": "2024-10-24"}
-    )
+async def created_tournament(db_session):
+    new_tournament = Tournament(name="Puchar Świata", date=date(2024, 10, 24))
+    db_session.add(new_tournament)
+    await db_session.commit()
+    await db_session.refresh(new_tournament)
+    return new_tournament
 
-    res.raise_for_status()
 
-    tournament_data = res.json()
+@pytest.fixture
+async def created_event(
+    created_tournament: Tournament,
+    db_session,
+    question_type: QuestionType = QuestionType.SINGLE_CHOICE,
+    question_text: str = "Kto wygra mecz?",
+    points_value: int = 10,
+) -> Event:
+    event_data = {
+        "id": uuid.uuid4(),
+        "tournament_id": created_tournament.id,
+        "question_type": question_type,
+        "question_text": question_text,
+        "points_value": points_value,
+    }
 
-    tournament_id = uuid.UUID(tournament_data["id"])
+    event = Event(**event_data)
 
-    result = await db_session.execute(
-        select(Tournament).filter(Tournament.id == tournament_id)
-    )
-    tournament = result.scalars().one_or_none()
+    db_session.add(event)
+    await db_session.commit()
+    await db_session.refresh(event)
 
-    return tournament
+    return event
+
+
+@pytest.fixture
+async def create_event(
+    created_tournament: Tournament,
+    db_session,
+    question_type: QuestionType = QuestionType.SINGLE_CHOICE,
+    question_text: str = "Kto wygra mecz?",
+    points_value: int = 10,
+) -> Event:
+    event_data = {
+        "id": uuid.uuid4(),
+        "tournament_id": created_tournament.id,
+        "question_type": question_type,
+        "question_text": question_text,
+        "points_value": points_value,
+    }
+
+    event = Event(**event_data)
+
+    db_session.add(event)
+    await db_session.commit()
+    await db_session.refresh(event)
+
+    return event

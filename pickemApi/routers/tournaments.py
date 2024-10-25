@@ -13,6 +13,7 @@ from pickemApi.schemas.events import (
     EventResponse,
     EventCreate,
     QuestionType,
+    TeamResponse,
 )
 from pickemApi.database import get_db
 from pickemApi.models.usermanager import current_admin_user
@@ -79,8 +80,19 @@ async def add_last_teams_to_tournament(
     return {"message": "Last 10 teams added to the tournament."}
 
 
+@router.get("/tournaments/{tournament_id}/teams", response_model=list[TeamResponse])
+async def get_teams(tournament_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Response all teams of tournament."""
+    tournament = await db.get(Tournament, tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    list_of_tournament = tournament.teams
+
+    return list_of_tournament
+
+
 @router.post(
-    "/tournaments/{tournament_id}/event", response_model=EventResponse, status_code=201
+    "/tournaments/{tournament_id}/events", response_model=EventResponse, status_code=201
 )
 async def create_event(
     tournament_id: uuid.UUID,
@@ -124,3 +136,22 @@ async def create_event(
         raise HTTPException(status_code=400, detail=str(e))
 
     return new_event
+
+
+@router.get("/tournaments/{tournament_id}/events", response_model=list[EventResponse])
+async def get_teams(tournament_id: uuid.UUID, db: AsyncSession = Depends(get_db)):  # noqa: F811
+    """Response all events of tournament."""
+    tournament = await db.get(Tournament, tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    list_of_events = tournament.events
+
+    return list_of_events
+
+
+@router.post("/tournaments/{tournament_id}/finalize")
+async def finalize_tournament(
+    tournament_id: uuid.UUID, db: AsyncSession = Depends(get_db)
+):
+    # Walidacja i obliczanie punktów
+    pass
