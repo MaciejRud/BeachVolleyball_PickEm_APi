@@ -3,9 +3,16 @@ Schemas for all functionality in API.
 """
 
 import uuid
+from enum import Enum
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from datetime import date
+
+
+class QuestionType(str, Enum):
+    YES_NO = "yes_no"
+    SINGLE_CHOICE = "single_choice"
+    MULTIPLE_CHOICE = "multiple_choice"
 
 
 class TeamBase(BaseModel):
@@ -57,7 +64,7 @@ class UserAnswerResponse(UserAnswerBase):
 
 class EventBase(BaseModel):
     tournament_id: uuid.UUID
-    question_type: str
+    question_type: QuestionType
     question_text: str
     points_value: int
 
@@ -68,6 +75,6 @@ class EventCreate(EventBase):
 
 class EventResponse(EventBase):
     id: uuid.UUID
-    answers: List[UserAnswerResponse]
+    answers: Optional[List[UserAnswerResponse]]
 
     model_config = ConfigDict(from_attributes=True)

@@ -7,7 +7,6 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from pickemApi.schemas.events import TeamResponse
 from pickemApi.database import get_db
 from pickemApi.models.usermanager import current_admin_user
 from pickemApi.models.model import Team, User

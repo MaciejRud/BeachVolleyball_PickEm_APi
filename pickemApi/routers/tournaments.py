@@ -7,10 +7,16 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from pickemApi.schemas.events import TournamentCreate, TournamentResponse, TeamResponse
+from pickemApi.schemas.events import (
+    TournamentCreate,
+    TournamentResponse,
+    EventResponse,
+    EventCreate,
+    QuestionType,
+)
 from pickemApi.database import get_db
 from pickemApi.models.usermanager import current_admin_user
-from pickemApi.models.model import User, Tournament, Team
+from pickemApi.models.model import User, Tournament, Team, Event
 
 
 logger = logging.getLogger(__name__)
@@ -71,3 +77,50 @@ async def add_last_teams_to_tournament(
         raise HTTPException(status_code=400, detail=str(e))
 
     return {"message": "Last 10 teams added to the tournament."}
+
+
+@router.post(
+    "/tournaments/{tournament_id}/event", response_model=EventResponse, status_code=201
+)
+async def create_event(
+    tournament_id: uuid.UUID,
+    event: EventCreate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(current_admin_user),
+):
+    """Creating a new event by admin."""
+
+    # Check if tournament exists
+    tournament = await db.get(Tournament, event.tournament_id)
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    # Check if points_value is >0
+    if event.points_value < 0:
+        raise HTTPException(status_code=422, detail="Points value must be non-negative")
+
+    # Check if question_type is correct
+    if event.question_type not in QuestionType:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid question type. Must be one of: {', '.join(q.value for q in QuestionType)}",
+        )
+
+    logger.info("Creating new event.")
+    new_event = Event(
+        tournament_id=tournament_id,
+        question_type=event.question_type,
+        question_text=event.question_text,
+        points_value=event.points_value,
+    )
+    db.add(new_event)
+    try:
+        await db.commit()
+        await db.refresh(new_event)
+        logger.info(f"Succesfully created event: {new_event}")
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error creating event: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return new_event

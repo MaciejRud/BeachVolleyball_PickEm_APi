@@ -5,7 +5,7 @@ Tests for tournaments APIs.
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.future import select
-from pickemApi.models.model import Team, Tournament
+from pickemApi.models.model import Team, Tournament, QuestionType
 
 
 @pytest.mark.anyio
@@ -105,3 +105,74 @@ async def test_create_sample_teams_multiple_calls(
     # Sprawdzamy, że drużyny zostały dodane
     teams2 = await db_session.execute(select(Team))
     assert len(teams2.scalars().all()) == 20  # Powinno być teraz 20 drużyn
+
+
+@pytest.mark.anyio
+async def test_create_event(authorized_superclient, created_tournament):
+    event_data = {
+        "tournament_id": str(created_tournament.id),
+        "question_type": QuestionType.YES_NO,
+        "question_text": "Is this a test?",
+        "points_value": 10,
+    }
+
+    response = await authorized_superclient.post(
+        f"/tournaments/{created_tournament.id}/event", json=event_data
+    )
+
+    assert response.status_code == 201
+    created_event = response.json()
+    assert created_event["question_type"] == event_data["question_type"]
+    assert created_event["question_text"] == event_data["question_text"]
+    assert created_event["points_value"] == event_data["points_value"]
+
+
+@pytest.mark.anyio
+async def test_create_event_invalid_question_type(
+    authorized_superclient, created_tournament
+):
+    event_data = {
+        "tournament_id": str(created_tournament.id),
+        "question_type": "invalid_type",
+        "question_text": "Is this a test?",
+        "points_value": 10,
+    }
+
+    response = await authorized_superclient.post(
+        f"/tournaments/{created_tournament.id}/event", json=event_data
+    )
+
+    assert response.status_code == 422  # HTTP 422 Unprocessable Entity
+
+
+@pytest.mark.anyio
+async def test_create_event_missing_fields(authorized_superclient, created_tournament):
+    event_data = {
+        "tournament_id": str(created_tournament.id),
+        "question_text": "Is this a test?",  # Brak question_type
+        "points_value": 10,
+    }
+
+    response = await authorized_superclient.post(
+        f"/tournaments/{created_tournament.id}/event", json=event_data
+    )
+
+    assert response.status_code == 422  # HTTP 422 Unprocessable Entity
+
+
+@pytest.mark.anyio
+async def test_create_event_invalid_points_value(
+    authorized_superclient, created_tournament
+):
+    event_data = {
+        "tournament_id": str(created_tournament.id),
+        "question_type": QuestionType.YES_NO,
+        "question_text": "Is this a test?",
+        "points_value": -5,  # Nieprawidłowa wartość punktowa
+    }
+
+    response = await authorized_superclient.post(
+        f"/tournaments/{created_tournament.id}/event", json=event_data
+    )
+
+    assert response.status_code == 422  # HTTP 422 Unprocessable Entity

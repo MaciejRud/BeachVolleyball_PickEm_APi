@@ -3,6 +3,9 @@ Databases models for Api.
 """
 
 import uuid
+
+from enum import Enum as Enum_class
+
 from sqlalchemy import (
     Column,
     String,
@@ -12,6 +15,7 @@ from sqlalchemy import (
     UUID,
     Date,
     Table,
+    Enum,
 )
 from sqlalchemy.orm import relationship, DeclarativeBase
 
@@ -20,6 +24,12 @@ from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 
 class Base(DeclarativeBase):
     pass
+
+
+class QuestionType(str, Enum_class):
+    YES_NO = "yes_no"
+    SINGLE_CHOICE = "single_choice"
+    MULTIPLE_CHOICE = "multiple_choice"
 
 
 # Join table that establishes a many-to-many relationship (tournament-teams)
@@ -80,7 +90,7 @@ class Event(Base):
 
     id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     tournament_id = Column(UUID, ForeignKey("tournaments.id"))
-    question_type = Column(String, nullable=False)
+    question_type = Column(Enum(QuestionType), nullable=False)
     question_text = Column(String, nullable=False)
     solution = Column(String, nullable=True)
     points_value = Column(Integer, nullable=False)
