@@ -5,19 +5,22 @@ Configuration for testing API.
 import os
 import pytest
 import contextlib
+import uuid
 
 from typing import AsyncGenerator
 from httpx import AsyncClient, ASGITransport
 
 from fastapi_users.password import PasswordHelper
-from pwdlib import PasswordHash, exceptions
+from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
+
+from sqlalchemy.future import select
 
 
 os.environ["ENV_STATE"] = "testing"  # noqa E402
 from pickemApi.main import app
 from pickemApi.database import engine, get_db
-from pickemApi.models.model import Base, User
+from pickemApi.models.model import Base, User, Tournament
 from pickemApi.models.usermanager import get_user_manager
 
 
@@ -137,3 +140,25 @@ async def authorized_superclient(
     client = async_client
     client.headers["Authorization"] = f"Bearer {token}"
     return client
+
+
+@pytest.fixture
+async def created_tournament(
+    authorized_superclient: AsyncClient, db_session
+) -> Tournament:
+    res = await authorized_superclient.post(
+        "/tournaments/", json={"name": "Testowy turniej", "date": "2024-10-24"}
+    )
+
+    res.raise_for_status()
+
+    tournament_data = res.json()
+
+    tournament_id = uuid.UUID(tournament_data["id"])
+
+    result = await db_session.execute(
+        select(Tournament).filter(Tournament.id == tournament_id)
+    )
+    tournament = result.scalars().one_or_none()
+
+    return tournament
