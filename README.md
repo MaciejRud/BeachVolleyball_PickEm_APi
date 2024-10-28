@@ -1,6 +1,3 @@
-Here’s an expanded version of your README that incorporates the requested details:
-
-```markdown
 # **PICKem Volleyball Prediction API (Core Version)**
 
 The PICKem Volleyball Prediction API is designed as the core backend for a volleyball prediction game. It enables administrators to set up tournaments, events, and questions and allows users to participate by answering questions to earn points based on the accuracy of their predictions. This API is the foundational version, structured for further expansion in features and functionality.
@@ -21,23 +18,6 @@ The PICKem Volleyball Prediction API is designed as the core backend for a volle
 - **Auth**: JWT-based authentication with OAuth2PasswordBearer flow
 - **Validation**: Pydantic schemas and custom validators
 - **Logging**: Built-in logging for error tracking and monitoring
-
-## **Installation**
-
-To install and run the API:
-```bash
-# Clone the repository
-git clone <repository-url>
-
-# Navigate to the directory
-cd pickem-volleyball-api
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the application
-uvicorn main:app --reload
-```
 
 ## **Endpoints**
 
@@ -195,5 +175,3 @@ Certain endpoints are protected based on user roles:
 
 This core API offers scalable RESTful endpoints, serving as a robust base to introduce advanced features for a complete and interactive user experience.
 ```
-
-Feel free to adjust any part of this expansion according to your preferences or add more specific details as needed!
