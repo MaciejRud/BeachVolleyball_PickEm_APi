@@ -3,9 +3,11 @@ Tests for tournaments APIs.
 """
 
 import pytest
+import uuid
 from httpx import AsyncClient
 from sqlalchemy.future import select
-from pickemApi.models.model import Team, Tournament, QuestionType
+
+from pickemApi.models.model import QuestionType, Team, Tournament, Event, UserAnswer
 
 
 @pytest.mark.anyio
@@ -176,3 +178,221 @@ async def test_create_event_invalid_points_value(
     )
 
     assert response.status_code == 422  # HTTP 422 Unprocessable Entity
+
+
+@pytest.mark.anyio
+async def test_set_solution_success(authorized_superclient, created_event):
+    solution_data = {"solution": "yes"}
+    response = await authorized_superclient.post(
+        f"/events/{created_event.id}/solution", json=solution_data
+    )
+    assert response.status_code == 201
+    print(response.json())
+    assert response.json()["solution"] == solution_data["solution"]
+
+
+@pytest.mark.anyio
+async def test_set_solution_invalid_format(authorized_superclient, created_event):
+    solution_data = {"solution": ["yes", "no"]}
+    response = await authorized_superclient.post(
+        f"/events/{created_event.id}/solution", json=solution_data
+    )
+    assert response.status_code == 422
+    assert (
+        "Solution must be a single string for SINGLE_CHOICE questions."
+        in response.json()["detail"]
+    )
+
+
+@pytest.mark.anyio
+async def test_set_solution_event_not_found(authorized_superclient):
+    solution_data = {"solution": "yes"}
+    fake_event_id = uuid.uuid4()
+    response = await authorized_superclient.post(
+        f"/events/{fake_event_id}/solution", json=solution_data
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Event not found"
+
+
+@pytest.mark.anyio
+async def test_set_solution_unauthorized_user(authorized_client, created_event):
+    solution_data = {"solution": "yes"}
+    response = await authorized_client.post(
+        f"/events/{created_event.id}/solution", json=solution_data
+    )
+    assert response.status_code == 403
+
+
+# Assume that the endpoint is part of the FastAPI app
+@pytest.mark.anyio
+async def test_finalize_tournament_success(
+    authorized_superclient: AsyncClient, db_session
+):
+    # Setup
+    tournament_id = uuid.uuid4()
+
+    # Create events
+    event1 = Event(
+        tournament_id=tournament_id,
+        question_type="YES_NO",
+        question_text="Is it sunny?",
+        solution="yes",
+        points_value=10,
+    )
+    event2 = Event(
+        tournament_id=tournament_id,
+        question_type="SINGLE_CHOICE",
+        question_text="Choose a team",
+        solution="Team A",
+        points_value=20,
+    )
+
+    db_session.add_all([event1, event2])
+    await db_session.commit()
+
+    # Create user and answers
+    user_id = uuid.uuid4()
+    user_answer1 = UserAnswer(user_id=user_id, event_id=event1.id, answer="yes")
+    user_answer2 = UserAnswer(user_id=user_id, event_id=event2.id, answer="Team A")
+
+    db_session.add_all([user_answer1, user_answer2])
+    await db_session.commit()
+
+    # Call the endpoint
+    response = await authorized_superclient.post(
+        f"/tournaments/{tournament_id}/finalize"
+    )
+
+    # Check response
+    assert response.status_code == 200
+    result = response.json()
+    assert result["tournament_id"] == str(tournament_id)
+    assert len(result["ranking"]) == 1
+    assert result["ranking"]["1"]["user_id"] == str(user_id)
+    assert result["ranking"]["1"]["points"] == 30  # All points awarded to the user
+
+
+@pytest.mark.anyio
+async def test_finalize_tournament_multiple_users(
+    authorized_superclient: AsyncClient, db_session
+):
+    # Setup
+    tournament_id = uuid.uuid4()
+
+    # Create events
+    event = Event(
+        tournament_id=tournament_id,
+        question_type="YES_NO",
+        question_text="Is it sunny?",
+        solution="yes",
+        points_value=10,
+    )
+
+    db_session.add(event)
+    await db_session.commit()
+
+    # Create users and answers
+    user1_id = uuid.uuid4()
+    user2_id = uuid.uuid4()
+    user_answer1 = UserAnswer(user_id=user1_id, event_id=event.id, answer="yes")
+    user_answer2 = UserAnswer(user_id=user2_id, event_id=event.id, answer="no")
+
+    db_session.add_all([user_answer1, user_answer2])
+    await db_session.commit()
+
+    # Call the endpoint
+    response = await authorized_superclient.post(
+        f"/tournaments/{tournament_id}/finalize"
+    )
+
+    # Check response
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result["ranking"]) == 1
+    assert result["ranking"]["1"]["user_id"] == str(user1_id)
+    assert result["ranking"]["1"]["points"] == 10  # Only user1 gets points
+
+
+@pytest.mark.anyio
+async def test_finalize_tournament_incorrect_answers(
+    authorized_superclient: AsyncClient, db_session
+):
+    # Setup
+    tournament_id = uuid.uuid4()
+
+    # Create events
+    event = Event(
+        tournament_id=tournament_id,
+        question_type="YES_NO",
+        question_text="Is it sunny?",
+        solution="yes",
+        points_value=10,
+    )
+
+    db_session.add(event)
+    await db_session.commit()
+
+    # Create user and incorrect answer
+    user_id = uuid.uuid4()
+    user_answer = UserAnswer(user_id=user_id, event_id=event.id, answer="no")
+
+    db_session.add(user_answer)
+    await db_session.commit()
+
+    # Call the endpoint
+    response = await authorized_superclient.post(
+        f"/tournaments/{tournament_id}/finalize"
+    )
+
+    # Check response
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result["ranking"]) == 0  # No ranking since the answer was incorrect
+
+
+@pytest.mark.anyio
+async def test_finalize_tournament_no_events(
+    authorized_superclient: AsyncClient, db_session
+):
+    # Setup
+    tournament_id = uuid.uuid4()
+
+    # Call the endpoint without adding any events
+    response = await authorized_superclient.post(
+        f"/tournaments/{tournament_id}/finalize"
+    )
+
+    # Check for 404 error
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No events found for this tournament"
+
+
+@pytest.mark.anyio
+async def test_finalize_tournament_no_answers(
+    authorized_superclient: AsyncClient, db_session
+):
+    # Setup
+    tournament_id = uuid.uuid4()
+
+    # Create events but no answers
+    event = Event(
+        tournament_id=tournament_id,
+        question_type="YES_NO",
+        question_text="Is it sunny?",
+        solution="yes",
+        points_value=10,
+    )
+
+    db_session.add(event)
+    await db_session.commit()
+
+    # Call the endpoint
+    response = await authorized_superclient.post(
+        f"/tournaments/{tournament_id}/finalize"
+    )
+
+    # Check response
+    assert response.status_code == 200
+    result = response.json()
+    assert len(result["ranking"]) == 0  # No ranking as no answers are provided

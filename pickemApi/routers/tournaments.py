@@ -18,6 +18,7 @@ from pickemApi.schemas.events import (
 from pickemApi.core.database import get_db
 from pickemApi.models.usermanager import current_admin_user
 from pickemApi.models.model import User, Tournament, Team, Event
+from pickemApi.services.tournament import finalize_tournament
 
 
 logger = logging.getLogger(__name__)
@@ -150,8 +151,10 @@ async def get_teams(tournament_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 
 
 @router.post("/tournaments/{tournament_id}/finalize")
-async def finalize_tournament(
-    tournament_id: uuid.UUID, db: AsyncSession = Depends(get_db)
+async def finalize_tournament_endpoint(
+    tournament_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(current_admin_user),
 ):
-    # Walidacja i obliczanie punktów
-    pass
+    """Finalize the tournament by checking all event answers and awarding points."""
+    return await finalize_tournament(tournament_id, db)

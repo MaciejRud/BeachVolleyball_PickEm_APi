@@ -3,16 +3,11 @@ Schemas for all functionality in API.
 """
 
 import uuid
-from enum import Enum
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional, Union
 from datetime import date
 
-
-class QuestionType(str, Enum):
-    YES_NO = "yes_no"
-    SINGLE_CHOICE = "single_choice"
-    MULTIPLE_CHOICE = "multiple_choice"
+from pickemApi.models.enums import QuestionType
 
 
 class TeamBase(BaseModel):
@@ -77,5 +72,10 @@ class EventCreate(EventBase):
 class EventResponse(EventBase):
     id: uuid.UUID
     answers: Optional[List[UserAnswerResponse]]
+    solution: Optional[Union[str, List[str]]]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class EventSolutionCreate(BaseModel):
+    solution: Union[str, List[str]]

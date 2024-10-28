@@ -4,8 +4,6 @@ Databases models for Api.
 
 import uuid
 
-from enum import Enum as Enum_class
-
 from sqlalchemy import (
     Column,
     String,
@@ -21,15 +19,11 @@ from sqlalchemy.orm import relationship, DeclarativeBase
 
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 
+from pickemApi.models.enums import QuestionType
+
 
 class Base(DeclarativeBase):
     pass
-
-
-class QuestionType(str, Enum_class):
-    YES_NO = "yes_no"
-    SINGLE_CHOICE = "single_choice"
-    MULTIPLE_CHOICE = "multiple_choice"
 
 
 # Join table that establishes a many-to-many relationship (tournament-teams)
@@ -49,6 +43,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     email = Column(String, unique=True, index=True)
     password_hash = Column(String)
     is_admin = Column(Boolean, default=False)
+    points = Column(Integer, default=0)
 
     answers = relationship("UserAnswer", back_populates="user", lazy="selectin")
 
