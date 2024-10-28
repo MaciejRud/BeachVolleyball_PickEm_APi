@@ -1,6 +1,6 @@
 # **PICKem Volleyball Prediction API (Core Version)**
 
-The PICKem Volleyball Prediction API is designed as the core backend for a volleyball prediction game. It enables administrators to set up tournaments, events, and questions and allows users to participate by answering questions to earn points based on the accuracy of their predictions. This API is the foundational version, structured for further expansion in features and functionality.
+The PICK'EM Volleyball Prediction API is designed as the core backend for a volleyball prediction game. It enables administrators to set up tournaments, events, and questions and allows users to participate by answering questions to earn points based on the accuracy of their predictions. This API is the foundational version, structured for further expansion in features and functionality.
 
 ## **Features**
 
