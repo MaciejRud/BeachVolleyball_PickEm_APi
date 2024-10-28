@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 
 from pickemApi.models.usermanager import get_user_manager
-from pickemApi.database import get_db, get_user_db
+from pickemApi.core.database import get_db, get_user_db
 from pickemApi.schemas.user import UserSuperIn
 from fastapi_users.exceptions import UserAlreadyExists
 

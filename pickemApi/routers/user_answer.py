@@ -7,7 +7,7 @@ import json
 from fastapi import Depends, APIRouter, HTTPException
 from pickemApi.schemas.events import UserAnswerCreate, UserAnswerResponse
 from pickemApi.models.usermanager import current_active_user
-from pickemApi.database import AsyncSession, get_db
+from pickemApi.core.database import AsyncSession, get_db
 from pickemApi.models.model import User, UserAnswer
 from sqlalchemy import select
 
@@ -33,7 +33,7 @@ async def submit_answer(
         )
     )
     if existing_answer.scalar() is not None:
-        # Jeśli odpowiedź już istnieje, zwróć błąd
+        # If answer wxists raise excepetion.
         logger.warning(
             f"User {user.id} already submitted an answer for event {answer.event_id}."
         )

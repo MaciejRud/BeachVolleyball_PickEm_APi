@@ -8,10 +8,10 @@ from typing import Optional
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, UUIDIDMixin, FastAPIUsers
 
-from ..database import get_user_db
+from ..core.database import get_user_db
 
 from pickemApi.models.model import User
-from pickemApi.security import auth_backend
+from pickemApi.core.security import auth_backend
 
 
 SECRET = "SECRET"

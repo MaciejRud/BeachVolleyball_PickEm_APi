@@ -11,7 +11,7 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 from pickemApi.models.model import User, Base
 
 from contextlib import asynccontextmanager
-from pickemApi.config import config
+from pickemApi.core.config import config
 
 
 engine = create_async_engine(

@@ -122,9 +122,6 @@ async def test_submit_answer_for_multiple_events(
 async def test_submit_duplicate_answer(
     authorized_client: AsyncClient, created_event: Event
 ):
-    # Tworzenie eventu
-
-    # Dodanie odpowiedzi użytkownika
     answer_data = {
         "user_id": str(authorized_client.user_id),
         "event_id": str(created_event.id),
@@ -133,6 +130,5 @@ async def test_submit_duplicate_answer(
     response = await authorized_client.post("/answers/", json=answer_data)
     assert response.status_code == 201
 
-    # Próba dodania odpowiedzi do tego samego eventu ponownie
     response_duplicate = await authorized_client.post("/answers/", json=answer_data)
-    assert response_duplicate.status_code == 409  # Powinna być blokada na duplikaty
+    assert response_duplicate.status_code == 409

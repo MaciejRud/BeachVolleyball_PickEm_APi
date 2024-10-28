@@ -1,7 +1,7 @@
 import logging
 from logging.config import dictConfig
 
-from pickemApi.config import config
+from pickemApi.core.config import config
 
 
 def obfuscated(email: str, obfuscated_length: int) -> str:

@@ -5,7 +5,7 @@ Routers for managing answers of users APIs.
 import uuid
 
 from fastapi import Depends, APIRouter
-from pickemApi.database import AsyncSession, get_db
+from pickemApi.core.database import AsyncSession, get_db
 
 router = APIRouter()
 

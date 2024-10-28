@@ -18,7 +18,7 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 
 os.environ["ENV_STATE"] = "testing"  # noqa E402
 from pickemApi.main import app
-from pickemApi.database import engine, get_db
+from pickemApi.core.database import engine, get_db
 from pickemApi.models.model import Base, User, Tournament, Event, QuestionType
 from pickemApi.models.usermanager import get_user_manager
 

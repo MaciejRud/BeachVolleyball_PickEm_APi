@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends
 from pickemApi.models.model import User
-from pickemApi.security import auth_backend
+from pickemApi.core.security import auth_backend
 from pickemApi.models.usermanager import fastapi_users, current_active_user
 from pickemApi.schemas.user import UserIn, UserResponse
 

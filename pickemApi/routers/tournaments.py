@@ -15,7 +15,7 @@ from pickemApi.schemas.events import (
     QuestionType,
     TeamResponse,
 )
-from pickemApi.database import get_db
+from pickemApi.core.database import get_db
 from pickemApi.models.usermanager import current_admin_user
 from pickemApi.models.model import User, Tournament, Team, Event
 
